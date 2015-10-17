@@ -85,6 +85,7 @@ def printTraverseLog_alpha_beta(node,depth,value,isNextMove,alpha,beta):
         print "node,depth,value,isNextMove,alpha,beta:",node + ',' + str(depth) + ',' + str(value) + ',' + str(isNextMove) + ',' + str(alpha) + ',' + str(beta) + '\n'
         f.write(node + ',' + str(depth) + ',' + str(value) + ',' + str(alpha) + ',' + str(beta) + '\n')
 
+
 def printTraverseLog(node,depth,value,isNextMove):
     with open('traverse_log_new.txt','a+') as f:
         if value == inf:
@@ -101,51 +102,96 @@ def AlphaBeta(State,player,cutoff_depth):
 
     def maxValue(State,depth,cutoff_depth,isNextMove,alpha,beta):
 
-        if depth == cutoff_depth:
+        if depth == cutoff_depth and isNextMove == False:
             State.setEvalScore()
             printTraverseLog_alpha_beta(State.getNode(),depth,State.getEvalScore(),isNextMove,alpha,beta)
             return State.getEvalScore()
 
-        v = -inf
-        index = 0
-        legalSuccessors,nextMoves = GetLegalSuccessors(State,MAX_PLAYER)
-        for action in legalSuccessors:
-            printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
-            v = max(v, minValue(action,depth + 1,cutoff_depth,nextMoves[index],alpha,beta))
-            index += 1
+        #raw_input()
 
-            if v >= beta:
-                return v
-            alpha = max(alpha,v)
+        index = 0
+        if isNextMove == False:
+            v = -inf
+            legalSuccessors,nextMoves = GetLegalSuccessors(State,MAX_PLAYER)
+
+            for action in legalSuccessors:
+                printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                v = max(v, minValue(action,depth + 1,cutoff_depth,nextMoves[index],alpha,beta))
+                index += 1
+
+                #print "now....Node,depth,v:",State.getNode(),depth,v
+                #raw_input()
+
+                if v >= beta:
+                    printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                    return v
+                alpha = max(alpha,v)
+
+        else:
+            v = inf
+            legalSuccessors,nextMoves = GetLegalSuccessors(State,MIN_PLAYER)
+
+            for action in legalSuccessors:
+                printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                v = min(v, maxValue(action,depth,cutoff_depth,nextMoves[index],alpha,beta))
+                index += 1
+
+                if v <= alpha:
+                    printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                    return v
+                beta = min(beta,v)
 
         printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+
+        #print "now....Node,depth,v:",State.getNode(),depth,v
+        #raw_input()
 
         return v
 
 
     def minValue(State,depth,cutoff_depth,isNextMove,alpha,beta):
 
-        if depth == cutoff_depth:
+        if depth == cutoff_depth and isNextMove == False:
             State.setEvalScore()
             printTraverseLog_alpha_beta(State.getNode(),depth,State.getEvalScore(),isNextMove,alpha,beta)
             return State.getEvalScore()
 
-        v = inf
         index = 0
-        legalSuccessors,nextMoves = GetLegalSuccessors(State,MIN_PLAYER)
-        for action in legalSuccessors:
-            printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
-            v = min(v, maxValue(action,depth + 1,cutoff_depth,nextMoves[index],alpha,beta))
-            index += 1
 
-            if v <= alpha:
-                return v
-            beta = min(beta,v)
+        if isNextMove == False:
+            v = inf
+            legalSuccessors,nextMoves = GetLegalSuccessors(State,MIN_PLAYER)
+            for action in legalSuccessors:
+                printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                v = min(v, maxValue(action,depth + 1,cutoff_depth,nextMoves[index],alpha,beta))
+                index += 1
+
+                if v <= alpha:
+                    printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                    return v
+                beta = min(beta,v)
+
+        else:
+            v = -inf
+            legalSuccessors,nextMoves = GetLegalSuccessors(State,MAX_PLAYER)
+            for action in legalSuccessors:
+                printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                v = max(v, minValue(action,depth,cutoff_depth,nextMoves[index],alpha,beta))
+                index += 1
+
+                if v >= beta:
+                    printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
+                    return v
+                alpha = max(alpha,v)
 
         printTraverseLog_alpha_beta(State.getNode(),depth,v,isNextMove,alpha,beta)
 
         return v
 
+    f= open('traverse_log_new_alpha_beta.txt','w')
+    f.close()
+
+    printTraverseLog_alpha_beta('Node','Depth','Value','','Alpha','Beta')
     legalSuccessors,nextMoves = GetLegalSuccessors(State,MAX_PLAYER)
     bestSuccessor = None
     score = -inf
@@ -159,6 +205,11 @@ def AlphaBeta(State,player,cutoff_depth):
         printTraverseLog_alpha_beta(State.getNode(),0,score,False,alpha,beta)
         score = max(score,minValue(action,1,cutoff_depth,nextMoves[index],alpha,beta))
         index += 1
+
+        #if score >= beta:
+        #    return score
+        alpha = max(alpha,score)
+
         if score > prevscore:
             bestSuccessor = action
             bestScore = score
@@ -175,12 +226,14 @@ def Minimax(State,player,cutoff_depth):
 
     def maxValue(State,depth,cutoff_depth,isNextMove):
         print "\nEnter maxValue..depth:",depth
-        if depth == cutoff_depth:
+        if depth == cutoff_depth and isNextMove == False:
             State.setEvalScore()
+            printTraverseLog(State.getNode(),depth,State.getEvalScore(),isNextMove)
+            return State.getEvalScore()
 
-            if isNextMove == False:
-                printTraverseLog(State.getNode(),depth,State.getEvalScore(),isNextMove)
-                return State.getEvalScore()
+            #if isNextMove == False:
+                #printTraverseLog(State.getNode(),depth,State.getEvalScore(),isNextMove)
+                #return State.getEvalScore()
 
         index = 0
         if isNextMove == False:
@@ -193,8 +246,8 @@ def Minimax(State,player,cutoff_depth):
                 index += 1
         else:
             v = inf
-            if depth == cutoff_depth:
-                v = State.getEvalScore()
+            #if depth == cutoff_depth:
+            #    v = State.getEvalScore()
             legalSuccessors,nextMoves = GetLegalSuccessors(State,MIN_PLAYER)
             for action in legalSuccessors:
                 printTraverseLog(State.getNode(),depth,v,isNextMove)
@@ -211,12 +264,14 @@ def Minimax(State,player,cutoff_depth):
 
     def minValue(State,depth,cutoff_depth,isNextMove):
         print "\nEnter minValue..depth:",depth
-        if depth == cutoff_depth:
+        if depth == cutoff_depth and isNextMove == False:
             State.setEvalScore()
+            printTraverseLog(State.getNode(),depth,State.getEvalScore(),isNextMove)
+            return State.getEvalScore()
 
-            if isNextMove == False:
-                printTraverseLog(State.getNode(),depth,State.getEvalScore(),isNextMove)
-                return State.getEvalScore()
+            #if isNextMove == False:
+             #   printTraverseLog(State.getNode(),depth,State.getEvalScore(),isNextMove)
+             #   return State.getEvalScore()
 
         index= 0
 
@@ -229,8 +284,8 @@ def Minimax(State,player,cutoff_depth):
                 index += 1
         else:
             v = -inf
-            if depth == cutoff_depth:
-                v = State.getEvalScore()
+            #if depth == cutoff_depth:
+            #    v = State.getEvalScore()
             legalSuccessors,nextMoves = GetLegalSuccessors(State,MAX_PLAYER)
             for action in legalSuccessors:
                 printTraverseLog(State.getNode(),depth,v,isNextMove)
@@ -244,6 +299,7 @@ def Minimax(State,player,cutoff_depth):
             values.append(v)
         return v
 
+    printTraverseLog('Node','Depth','Value','')
     legalSuccessors,nextMoves = GetLegalSuccessors(State,MAX_PLAYER)
     bestSuccessor = None
     score = -inf
@@ -382,7 +438,7 @@ def GetLegalSuccessors(state,player):
                 i = pitIndex + 1
 
                 while val > 0:
-                    if i < pitSize and pits[i] == 0 and val == 1:
+                    if i < pitSize and pits[i] == 0 and val == 1:   #capture condition
                         pits[pitSize] += pits[-1-i]
                         pits[-1-i] = 0
                         pits[pitSize] += 1
@@ -483,6 +539,8 @@ def GetLegalSuccessors(state,player):
             x.display()
             i -= 1
 
+        #raw_input()
+
         return list(reversed(possibleStates)),list(reversed(nextMove))
 
 
@@ -537,17 +595,19 @@ def ParseInputFile():
 def main():
     A,B,cutoffDepth = ParseInputFile()
 
+    f= open('traverse_log_new.txt','w')
+    f.close()
+
     global MAX_PLAYER,MIN_PLAYER
 
     Start = GameState(A,B)
     #GetLegalSuccessors(Start,1)
     #Greedy(Start,2)
-    printTraverseLog('Node','Depth','Value','')
     #printTraverseLog_alpha_beta('Node','Depth','Value','','Alpha','Beta')
     #Minimax(Start,2,3)    ####problem with >3
 
-    Minimax(Start,MAX_PLAYER,2)
-    #AlphaBeta(Start,MAX_PLAYER,2)
+    #Minimax(Start,MAX_PLAYER,2)
+    AlphaBeta(Start,MAX_PLAYER,2)
 
 if __name__ == '__main__':
     main()
